@@ -1,0 +1,125 @@
+import datetime as dt
+import pandas as pd
+import streamlit as st
+import numpy as np
+import pydeck as pdk
+
+file = 'skyscrapers.csv'
+
+st.set_page_config(layout="wide")
+
+hide_streamlit_style = """
+            <style>
+            footer:after {
+                content:'by https://gregoirejan.github.io / Using frost.met.no API'; 
+                visibility: visible;
+                display: block;
+                position: relative;
+                #background-color: red;
+                padding: 5px;
+                top: 2px;
+            }
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+st.title("Skyscrapers Around the World")
+
+
+def load_data(n_rows):
+    data = pd.read_csv(file, nrows=n_rows)
+    lower_case = lambda x: str(x).lower()
+    data.rename(lower_case, axis='columns', inplace=True)
+    return data
+
+
+data = load_data(80)
+
+if st.checkbox("Show raw data"):
+    st.subheader("Raw data")
+    st.write(data)
+
+st.subheader('Location of Skyscrapers')
+st.map(data)
+
+st.table(data['name'])
+
+layer = pdk.Layer(
+    'HexagonLayer',  # `type` positional argument is here
+    data,
+    get_position=['lon', 'lat'],
+    auto_highlight=True,
+    elevation_scale=50,
+    pickable=True,
+    elevation_range=[0, 3000],
+    extruded=True,
+    coverage=1)
+
+# Set the viewport location
+view_state = pdk.ViewState(
+    longitude=-1.415,
+    latitude=52.2323,
+    zoom=6,
+    min_zoom=5,
+    max_zoom=15,
+    pitch=40.5,
+    bearing=-27.36)
+
+# Combined all of it and render a viewport
+r = pdk.Deck(layers=[layer], initial_view_state=view_state)
+r.to_html('hexagon-example.html')
+
+st.pydeck_chart(r)
+"""view_state = pdk.ViewState(
+    latitude=data["lat"].mean(),
+    longitude=data["lon"].mean())
+
+layer1 = pdk.Layer("ScatterplotLayer",
+                   data=data,
+                   get_position="[lat, lon]",
+                   get_radius=300,
+                   get_color=[0, 0, 255],
+                   pickable=True
+                   )
+
+tool_tip = {"html": f"Tower Name: <br/> <b>{['name']}</b> ",
+            'style': {"backgroundColor": "steelblue",
+                    "color": "white"}
+            }
+
+map1 = pdk.Deck(
+    map_style="light",
+    initial_view_state=view_state,
+    layers=[layer1]
+)
+
+st.pydeck_chart(map1)
+
+st.pydeck_chart(pdk.Deck(
+    map_style='mapbox://styles/mapbox/light-v9',
+    initial_view_state=pdk.ViewState(
+         latitude=37.76,
+         longitude=-122.4,
+         zoom=11,
+         pitch=50,
+     ),
+    layers=[
+         pdk.Layer(
+            'HexagonLayer',
+            data=data,
+            get_position='[lon, lat]',
+            radius=200,
+            elevation_scale=4,
+            elevation_range=[0, 1000],
+            pickable=True,
+            extruded=True,
+         ),
+         pdk.Layer(
+             'ScatterplotLayer',
+             data=data,
+             get_position='[lon, lat]',
+             get_color='[200, 30, 0, 160]',
+             get_radius=200,
+         ),
+     ],
+))"""
